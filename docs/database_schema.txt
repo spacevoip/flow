@@ -1,0 +1,96 @@
+# Documentação do Esquema de Banco de Dados - PixFlow2
+
+## Tabelas e Seus Usos
+
+### 1. usuarios
+- Descrição: Armazena informações dos usuários do sistema
+- Colunas:
+  - id (UUID): Identificador único do usuário
+  - account: Número da conta do usuário
+  - name: Nome completo do usuário
+  - email: Email do usuário
+  - pin: PIN criptografado para autenticação
+  - created_at: Data de criação do registro
+- Usado em:
+  - src/services/auth/authService.ts: Login e autenticação
+  - src/pages/Profile.tsx: Exibição e edição de perfil
+  - src/services/auth/pinService.ts: Validação e alteração de PIN
+
+### 2. pagamentos_enviados
+- Descrição: Registra todas as transações PIX enviadas
+- Colunas:
+  - id (UUID): Identificador único da transação
+  - account: Conta do remetente
+  - chave_pix: Chave PIX do destinatário
+  - valor: Valor da transação
+  - taxa: Taxa cobrada
+  - status: Status da transação (pending, completed, failed)
+  - method: Método de pagamento (sempre 'pix')
+  - txid: Identificador da transação PIX
+  - data: Data e hora da transação
+- Usado em:
+  - src/services/pixService.ts: Registro de transações PIX
+  - src/pages/Transactions.tsx: Histórico de transações
+  - src/components/pix/ReviewCard.tsx: Confirmação de transação
+
+### 3. favoritos
+- Descrição: Armazena chaves PIX favoritas dos usuários
+- Colunas:
+  - id (UUID): Identificador único do favorito
+  - user_id: ID do usuário (referência à tabela usuarios)
+  - key: Chave PIX
+  - name: Nome/descrição do favorito
+  - created_at: Data de criação do registro
+- Usado em:
+  - src/services/favoriteService.ts: Gerenciamento de favoritos
+  - src/components/pix/favorites/FavoritesCard.tsx: Exibição de favoritos
+  - src/components/pix/favorites/AddFavoriteForm.tsx: Adição de novos favoritos
+
+### 4. saldos
+- Descrição: Controle de saldo das contas
+- Colunas:
+  - account: Número da conta (chave primária)
+  - balance: Saldo atual
+  - updated_at: Última atualização do saldo
+- Usado em:
+  - src/services/balanceService.ts: Verificação e atualização de saldo
+  - src/components/dashboard/BalanceCard.tsx: Exibição de saldo
+  - src/services/pixService.ts: Verificação antes de transações
+
+### 5. qrcodes
+- Descrição: Armazena QR codes gerados para pagamento
+- Colunas:
+  - id (UUID): Identificador único do QR code
+  - account: Conta associada
+  - valor: Valor do pagamento
+  - status: Status do QR code (active, used, expired)
+  - created_at: Data de criação
+  - expires_at: Data de expiração
+- Usado em:
+  - src/services/qrCodeService.ts: Geração e validação de QR codes
+  - src/pages/PixQRCode.tsx: Geração e exibição de QR codes
+  - src/components/qrcode/QRCodeScanner.tsx: Leitura de QR codes
+
+## Observações Importantes:
+1. Todas as tabelas possuem timestamps automáticos (created_at, updated_at)
+2. Relacionamentos são mantidos através de foreign keys para garantir integridade dos dados
+3. Índices são mantidos em colunas frequentemente consultadas para otimizar performance
+
+## Uso em Funcionalidades Principais:
+
+1. Processo de PIX:
+   - Consulta saldos
+   - Insere em pagamentos_enviados
+   - Atualiza saldos
+
+2. Gestão de Favoritos:
+   - CRUD na tabela favoritos
+   - Joins com usuarios para validações
+
+3. Autenticação:
+   - Consulta usuarios
+   - Validação de PIN
+
+4. QR Code:
+   - Geração e controle na tabela qrcodes
+   - Integração com pagamentos_enviados para processamento
